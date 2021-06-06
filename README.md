@@ -9,6 +9,7 @@ Specifically, this contains:
 - `hmac/`: Importing an HMAC key into PKCS-11
 - `aes_encrypt/`:  AES Encrypt/Decrypt
 - `rsa_sign/`: Sign/Verify using RSA
+- `import_rsa/`: Create an RSA keypair by specifying the parameters
 
 and various functions using `pkcs11-tool` to generate keys on TPM/Yubikey and SoftHSM
 
@@ -369,6 +370,25 @@ pkcs11-tool  --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so --pin myn
 pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so --list-token-slots
 pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so  --list-objects --pin mynewpin
 ```
+
+### Importing RSA key pair using modulus and exponent
+
+- `import_rsa/`: Create an RSA keypair by specifying the parameters
+
+
+First create RSA Keypair:
+
+```bash
+openssl genrsa -out priv.pem 2048
+openssl rsa -in priv.pem -outform PEM -pubout -out pub.pem
+openssl rsa -noout -text -inform PEM -in priv.pem
+
+openssl rsa -pubin -in pub.pem -RSAPublicKey_out
+openssl rsa -pubin -in pub.pem -text -noout
+```
+
+Reference: [pkcs11-tool.c](https://github.com/OpenSC/OpenSC/blob/master/src/tools/pkcs11-tool.c#L3189)
+
 
 ---
 
