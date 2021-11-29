@@ -493,7 +493,6 @@ $ apt-get update && apt-get install libtpm2-pkcs11-1 tpm2-tools libengine-pkcs11
 ```
 
 ```bash
-```
 $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/libtpm2_pkcs11.so.1 --list-mechanisms --slot-index 0
 	Using slot with index 0 (0x1)
 	Supported mechanisms:
@@ -516,9 +515,6 @@ $ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/libtpm2_pkcs11.so.1 --list-mech
 	SHA384, digest
 	SHA512, digest
 ```
-
-```
-
 
 Now use `pkcs-tools` to genrate a keypair...you can also import one or reference one thats already present..but the following creates one from scratch:
 
