@@ -10,6 +10,7 @@ Specifically, this contains:
 - `aes_encrypt/`:  AES Encrypt/Decrypt
 - `rsa_sign/`: Sign/Verify using RSA
 - `import_rsa/`: Create an RSA keypair by specifying the parameters
+- `pkcs_uri/`: Parse and PKCS URI formatted string for RSA sign/verify
 
 and various functions using `pkcs11-tool` to generate keys on TPM/Yubikey and SoftHSM
 
@@ -388,6 +389,148 @@ openssl rsa -pubin -in pub.pem -text -noout
 ```
 
 Reference: [pkcs11-tool.c](https://github.com/OpenSC/OpenSC/blob/master/src/tools/pkcs11-tool.c#L3189)
+
+
+### Parsing PKCS URI
+
+The following uses a helper library to parse a [PKCS URI](https://datatracker.ietf.org/doc/html/rfc7512)
+
+With the softhsm config below
+
+- `softhsm.conf`
+
+```conf
+log.level = DEBUG
+objectstore.backend = file
+directories.tokendir = /tmp/soft_hsm/tokens
+slots.removable = true
+```
+
+Create an RSA keypair
+
+```bash
+$ mkdir -p /tmp/soft_hsm/tokens
+
+$ export SOFTHSM2_CONF=`pwd`/softhsm.conf
+
+$ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so --slot-index=0 --init-token --label="token1" --so-pin="123456"
+
+$ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so  --label="token1" --init-pin --so-pin "123456" --pin mynewpin
+
+$ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so --list-token-slots
+
+      Using slot 0 with a present token (0x34a7cbb6)
+      User PIN successfully initialized
+      Available slots:
+      Slot 0 (0x34a7cbb6): SoftHSM slot ID 0x34a7cbb6
+        token label        : token1
+        token manufacturer : SoftHSM project
+        token model        : SoftHSM v2
+        token flags        : login required, rng, token initialized, PIN initialized, other flags=0x20
+        hardware version   : 2.6
+        firmware version   : 2.6
+        serial num         : 71bc89cdb4a7cbb6
+        pin min/max        : 4/255
+      Slot 1 (0x1): SoftHSM slot ID 0x1
+        token state:   uninitialized
+
+
+$ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so -l -k --key-type rsa:2048 --id 4142 --label keylabel1 --pin mynewpin
+
+      Using slot 0 with a present token (0x34a7cbb6)
+      Key pair generated:
+      Private Key Object; RSA 
+        label:      keylabel1
+        ID:         4142
+        Usage:      decrypt, sign, unwrap
+        Access:     sensitive, always sensitive, never extractable, local
+      Public Key Object; RSA 2048 bits
+        label:      keylabel1
+        ID:         4142
+        Usage:      encrypt, verify, wrap
+        Access:     local
+
+
+$ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so  --list-objects 
+
+      Using slot 0 with a present token (0x34a7cbb6)
+      Public Key Object; RSA 2048 bits
+        label:      keylabel1
+        ID:         4142
+        Usage:      encrypt, verify, wrap
+        Access:     local
+
+        
+
+$ softhsm2-util --show-slots
+      Available slots:
+      Slot 883411894
+          Slot info:
+              Description:      SoftHSM slot ID 0x34a7cbb6                                      
+              Manufacturer ID:  SoftHSM project                 
+              Hardware version: 2.6
+              Firmware version: 2.6
+              Token present:    yes
+          Token info:
+              Manufacturer ID:  SoftHSM project                 
+              Model:            SoftHSM v2      
+              Hardware version: 2.6
+              Firmware version: 2.6
+              Serial number:    71bc89cdb4a7cbb6
+              Initialized:      yes
+              User PIN init.:   yes
+              Label:            token1                          
+      Slot 1
+          Slot info:
+              Description:      SoftHSM slot ID 0x1                                             
+              Manufacturer ID:  SoftHSM project                 
+              Hardware version: 2.6
+              Firmware version: 2.6
+              Token present:    yes
+          Token info:
+              Manufacturer ID:  SoftHSM project                 
+              Model:            SoftHSM v2      
+              Hardware version: 2.6
+              Firmware version: 2.6
+              Serial number:                    
+              Initialized:      no
+              User PIN init.:   no
+              Label:                                            
+```
+
+Note the `Serial Number` from command above.  Use that in the PKCS URI below.
+
+For me it was
+
+* slot-id = hex `0x34a7cbb6` => `883411894`
+* serial = `71bc89cdb4a7cbb6`
+
+so,
+
+```bash
+export PKCS11_URI="pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;slot-id=883411894;serial=71bc89cdb4a7cbb6;token=token1;object=keylabel1;id=4142?pin-value=mynewpin&module-path=/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so"
+
+go run main.go $PKCS11_URI
+
+      slot-id 883411894
+      Token token1
+      id 4142
+      Object keylabel1
+
+        Public Key: 
+      -----BEGIN RSA PUBLIC KEY-----
+      MIIBCgKCAQEA2v98/uTkJXKg9AV70Ac9Hz7F57LUgxjHbFrVYYZTsClHnxw4lvS7
+      qhh3Mb56ss14s+ntjabqbuwZiEocY7JylqzPrRh8SOzjjceR3Qsn1toAobdznMC4
+      rCueQF0Da01gzPcxle2Vx3h9NLVHoreUOoOG4zjzYYIsKljmzw95ZacEiXmEiKLD
+      aOFewoRHo+jWCZHfno647JLtj/GydLg/J9MMeIrbFIqGdc1JnbV/FaqjYtgif7UR
+      kcXjginBK/fwXkDSY01eV9LIqWICP8RnNUPcijYGkNWgI0h5ne4hGMVWSpPZftqB
+      0jZ+9oBbFkRmaHNRUw0CQdx5hZojSKm5vQIDAQAB
+      -----END RSA PUBLIC KEY-----
+
+      Signature FfrurtcvrIt/R7r13H2Kd91KirwEUG9tifF2+Skde5D98VCqAvBWwZPhTKsUO+YshCwry2V51T/nMBwsYSSdffBjd+Ok2+P+c7443zngaBQO1ocdygiFHu8kniIAYxEHYmhq1Ue8UHxtKGKF5OTbewrlXxxs4aS5b2z5jsOfDnirTlFSDSn9fyKMMQEKi+IJFX0qVudLHEr7x2LxOprEsaYyrScVn0pnrdXZ332L7aACbbDcHWPNdrtR/HTXLsxABlynFGhOPhno3eqmUCL47tmtc5Ce85SQHcEb+TIMBaqRs20oBpMBvAKwW379kKT1moYJePp+eRvgBF1watUuDA
+      Signature Verified
+
+```
 
 
 ---
