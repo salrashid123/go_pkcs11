@@ -9,6 +9,7 @@ Specifically, this contains:
 - `hmac/`: Importing an HMAC key into PKCS-11
 - `aes_encrypt/`:  AES Encrypt/Decrypt
 - `rsa_sign/`: Sign/Verify using RSA
+- `ecc_sign/`: Sign/Verify using ECC
 - `import_rsa/`: Create an RSA keypair by specifying the parameters
 - `pkcs_uri/`: Parse and PKCS URI formatted string for RSA sign/verify
 
@@ -21,6 +22,7 @@ and various functions using `pkcs11-tool` to generate keys on TPM/Yubikey and So
 To use these samples, first install [SoftHSM](https://github.com/opendnssec/SoftHSMv2) and set the path appropriately:
 
 ```bash
+# mkdir -p /path/to/go_pkcs11/misc/tokens
 # edit /path/to/go_pkcs11/misc/softhsm.conf
 # set directories.tokendir = /path/to/go_pkcs11/misc/tokens
 
