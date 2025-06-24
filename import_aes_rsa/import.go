@@ -157,14 +157,6 @@ func main() {
 	}
 	wpubID := buf.Bytes()
 
-	buf = new(bytes.Buffer)
-	num = 3
-	err = binary.Write(buf, binary.LittleEndian, num)
-	if err != nil {
-		log.Fatalf("binary.Write failed: %v", err)
-	}
-	wprivID := buf.Bytes()
-
 	ktemplate = []*pkcs11.Attribute{
 		pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PUBLIC_KEY),
 		pkcs11.NewAttribute(pkcs11.CKA_ID, wpubID),
@@ -199,7 +191,7 @@ func main() {
 		pkcs11.NewAttribute(pkcs11.CKA_LABEL, "wrappriv1"),
 		pkcs11.NewAttribute(pkcs11.CKA_SENSITIVE, true),
 		pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, false),
-		pkcs11.NewAttribute(pkcs11.CKA_ID, wprivID),
+		pkcs11.NewAttribute(pkcs11.CKA_ID, wpubID),
 	}
 	wpbk, wpvk, err := p.GenerateKeyPair(session,
 		[]*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_RSA_PKCS_KEY_PAIR_GEN, nil)},

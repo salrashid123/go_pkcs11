@@ -71,14 +71,6 @@ func main() {
 	}
 	wpubID := buf.Bytes()
 
-	buf = new(bytes.Buffer)
-	num = 2
-	err = binary.Write(buf, binary.LittleEndian, num)
-	if err != nil {
-		log.Fatalf("binary.Write failed: %v", err)
-	}
-	wprivID := buf.Bytes()
-
 	wpublicKeyTemplate := []*pkcs11.Attribute{
 		pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PUBLIC_KEY),
 		pkcs11.NewAttribute(pkcs11.CKA_KEY_TYPE, pkcs11.CKK_RSA),
@@ -98,7 +90,7 @@ func main() {
 		pkcs11.NewAttribute(pkcs11.CKA_LABEL, "WrappingRSAPrivateKey"),
 		pkcs11.NewAttribute(pkcs11.CKA_SENSITIVE, true),
 		pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, false),
-		pkcs11.NewAttribute(pkcs11.CKA_ID, wprivID),
+		pkcs11.NewAttribute(pkcs11.CKA_ID, wpubID),
 	}
 
 	wpbk, wpvk, err := p.GenerateKeyPair(session,
@@ -157,14 +149,6 @@ func main() {
 	}
 	pubID := buf.Bytes()
 
-	buf = new(bytes.Buffer)
-	num = 5
-	err = binary.Write(buf, binary.LittleEndian, num)
-	if err != nil {
-		log.Fatalf("binary.Write failed: %v", err)
-	}
-	privID := buf.Bytes()
-
 	publicKeyTemplate := []*pkcs11.Attribute{
 		pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PUBLIC_KEY),
 		pkcs11.NewAttribute(pkcs11.CKA_KEY_TYPE, pkcs11.CKK_RSA),
@@ -188,7 +172,7 @@ func main() {
 		pkcs11.NewAttribute(pkcs11.CKA_WRAP_WITH_TRUSTED, true),
 		pkcs11.NewAttribute(pkcs11.CKA_UNWRAP, false),
 		pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, true),
-		pkcs11.NewAttribute(pkcs11.CKA_ID, privID),
+		pkcs11.NewAttribute(pkcs11.CKA_ID, pubID),
 	}
 
 	pbk, pvk, err := p.GenerateKeyPair(session,

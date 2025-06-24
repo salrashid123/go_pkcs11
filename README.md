@@ -103,7 +103,7 @@ THis is just to test, its not necessary for wrap/unwrap
 		pkcs11.NewAttribute(pkcs11.CKA_WRAP_WITH_TRUSTED, false),
 		pkcs11.NewAttribute(pkcs11.CKA_UNWRAP, false),
 		pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, true),
-		pkcs11.NewAttribute(pkcs11.CKA_ID, privID),
+		pkcs11.NewAttribute(pkcs11.CKA_ID, pubID),
 	}
 
 ```
@@ -216,7 +216,7 @@ This is just to test, its not necessary for wrap/unwrap
 		pkcs11.NewAttribute(pkcs11.CKA_LABEL, "wrappriv1"),
 		pkcs11.NewAttribute(pkcs11.CKA_SENSITIVE, true),
 		pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, false),
-		pkcs11.NewAttribute(pkcs11.CKA_ID, wprivID),
+		pkcs11.NewAttribute(pkcs11.CKA_ID, wpubID),
 	}
 ```
 

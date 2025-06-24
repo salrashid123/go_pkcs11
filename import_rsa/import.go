@@ -110,14 +110,6 @@ func main() {
 	}
 	pubID := buf.Bytes()
 
-	buf = new(bytes.Buffer)
-	num = 2
-	err = binary.Write(buf, binary.LittleEndian, num)
-	if err != nil {
-		log.Fatalf("binary.Write failed: %v", err)
-	}
-	privID := buf.Bytes()
-
 	publicKeyTemplate := []*pkcs11.Attribute{
 		pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PUBLIC_KEY),
 		pkcs11.NewAttribute(pkcs11.CKA_KEY_TYPE, pkcs11.CKK_RSA),
@@ -139,7 +131,7 @@ func main() {
 		pkcs11.NewAttribute(pkcs11.CKA_PRIVATE, true),
 		pkcs11.NewAttribute(pkcs11.CKA_SENSITIVE, true),
 		pkcs11.NewAttribute(pkcs11.CKA_LABEL, "priv1"),
-		pkcs11.NewAttribute(pkcs11.CKA_ID, privID),
+		pkcs11.NewAttribute(pkcs11.CKA_ID, pubID),
 
 		pkcs11.NewAttribute(pkcs11.CKA_SIGN, true),
 		pkcs11.NewAttribute(pkcs11.CKA_DECRYPT, true),
