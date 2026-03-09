@@ -23,6 +23,10 @@ const (
 )
 
 func main() {
+	os.Exit(run()) // since defer func() needs to get called first
+}
+
+func run() int {
 	if len(os.Args) < 2 {
 		panic("Missing pkcs11 URI argument")
 	}
@@ -39,18 +43,18 @@ func main() {
 	uri.SetAllowAnyModule(true)
 	module, err := uri.GetModule()
 	if err != nil {
-		panic(err)
+		return 1
 	}
 
 	pin, err := uri.GetPIN()
 	if err != nil {
-		panic(err)
+		return 1
 	}
 
 	p := pkcs11.New(module)
 	err = p.Initialize()
 	if err != nil {
-		panic(err)
+		return 1
 	}
 
 	defer p.Destroy()
@@ -74,7 +78,7 @@ func main() {
 
 	id, ok := uri.GetPathAttribute("id", false)
 	if !ok {
-		panic("No slot-id in pkcs11 URI")
+		panic("No id in pkcs11 URI")
 	}
 	fmt.Printf("id %s\n", id)
 
@@ -85,19 +89,28 @@ func main() {
 
 	object, ok := uri.GetPathAttribute("object", false)
 	if !ok {
-		panic("No slot-id in pkcs11 URI")
+		fmt.Println("No object in pkcs11 URI")
+		return 1
 	}
 	fmt.Printf("Object %s\n", object)
 
+	_, err = p.GetSlotList(true)
+	if err != nil {
+		fmt.Println(err)
+		return 1
+	}
+
 	session, err := p.OpenSession(uint(slotid), pkcs11.CKF_SERIAL_SESSION|pkcs11.CKF_RW_SESSION)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return 1
 	}
 	defer p.CloseSession(session)
 
 	err = p.Login(session, pkcs11.CKU_USER, pin)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return 1
 	}
 	defer p.Logout(session)
 
@@ -105,19 +118,22 @@ func main() {
 		pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_PUBLIC_KEY),
 		pkcs11.NewAttribute(pkcs11.CKA_KEY_TYPE, pkcs11.CKK_RSA),
 		pkcs11.NewAttribute(pkcs11.CKA_TOKEN, true),
-		pkcs11.NewAttribute(pkcs11.CKA_LABEL, object),
+		//pkcs11.NewAttribute(pkcs11.CKA_LABEL, object),
 		pkcs11.NewAttribute(pkcs11.CKA_ID, hex_id),
 	}
 
 	if err := p.FindObjectsInit(session, publicKeyTemplate); err != nil {
-		panic(err)
+		fmt.Println(err)
+		return 1
 	}
 	ik, _, err := p.FindObjects(session, 1)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return 1
 	}
 	if err = p.FindObjectsFinal(session); err != nil {
-		panic(err)
+		fmt.Println(err)
+		return 1
 	}
 
 	pr, err := p.GetAttributeValue(session, ik[0], []*pkcs11.Attribute{
@@ -125,7 +141,8 @@ func main() {
 		pkcs11.NewAttribute(pkcs11.CKA_PUBLIC_EXPONENT, nil),
 	})
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return 1
 	}
 
 	modulus := new(big.Int)
@@ -187,4 +204,5 @@ func main() {
 
 	fmt.Println()
 	fmt.Println("Signature Verified")
+	return 0
 }

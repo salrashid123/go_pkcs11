@@ -534,6 +534,70 @@ go run main.go $PKCS11_URI
 
 ```
 
+for yubikey
+
+```bash
+export PKCS11_URI="pkcs11:model=YubiKey%20YK5;manufacturer=Yubico%20%28www.yubico.com%29;serial=13981219;slot-id=0;token=YubiKey%20PIV%20%2313981219;id=02;object=Private%20key%20for%20Digital%20Signature;type=private?pin-value=123456&module-path=/usr/lib/x86_64-linux-gnu/libykcs11.so"
+
+export PKCS_MODULE="/usr/lib/x86_64-linux-gnu/libykcs11.so"
+
+pkcs11-tool --module $PKCS_MODULE --list-token-slots
+
+	Available slots:
+	Slot 0 (0x0): Yubico YubiKey OTP+FIDO+CCID 00 00
+	token label        : YubiKey PIV #13981219
+	token manufacturer : Yubico (www.yubico.com)
+	token model        : YubiKey YK5
+	token flags        : login required, rng, token initialized, PIN initialized
+	hardware version   : 1.0
+	firmware version   : 5.27
+	serial num         : 13981219
+	pin min/max        : 6/64
+	uri                : pkcs11:model=YubiKey%20YK5;manufacturer=Yubico%20%28www.yubico.com%29;serial=13981219;token=YubiKey%20PIV%20%2313981219
+
+pkcs11-tool --module $PKCS_MODULE  --login --list-objects -y privkey
+
+	Using slot 0 with a present token (0x0)
+	Logging in to "YubiKey PIV #13981219".
+	Please enter User PIN:
+	Private Key Object; RSA
+	label:      Private key for PIV Authentication
+	ID:         01
+	Usage:      decrypt, sign
+	Access:     sensitive, always sensitive, never extractable, local
+	uri:        pkcs11:model=YubiKey%20YK5;manufacturer=Yubico%20%28www.yubico.com%29;serial=13981219;token=YubiKey%20PIV%20%2313981219;id=%01;object=Private%20key%20for%20PIV%20Authentication;type=private
+	Private Key Object; RSA
+	label:      Private key for Digital Signature
+	ID:         02
+	Usage:      decrypt, sign
+	Access:     always authenticate, sensitive, always sensitive, never extractable, local
+	uri:        pkcs11:model=YubiKey%20YK5;manufacturer=Yubico%20%28www.yubico.com%29;serial=13981219;token=YubiKey%20PIV%20%2313981219;id=%02;object=Private%20key%20for%20Digital%20Signature;type=private
+	Private Key Object; RSA
+	label:      Private key for PIV Attestation
+	ID:         19
+	Usage:      none
+	Access:     sensitive, always sensitive, never extractable
+	uri:        pkcs11:model=YubiKey%20YK5;manufacturer=Yubico%20%28www.yubico.com%29;serial=13981219;token=YubiKey%20PIV%20%2313981219;id=%19;object=Private%20key%20for%20PIV%20Attestation;type=private
+
+$ go run main.go $PKCS11_URI
+slot-id 0
+Token YubiKey PIV #13981219
+id 02
+Object Private key for Digital Signature
+  Public Key: 
+-----BEGIN RSA PUBLIC KEY-----
+MIIBCgKCAQEA0HpK26SJoARPxnr1sRqgHjbX3szgGw516yLZ28Mo3eaFwfrCygTG
+O28EUANECkgVLXr+ehSrpPcMpo2IRjAH2OmSbnESyb462YA7D+kA6A3Kv8g8j0te
+KUouxSDFts/6wzr1I48i9ryJDTqd/x2jlO94QE11zENuPL6NGCN7plneQRNtcRJ2
+6Zha5Q4WLmZlHQ9zSsal8FAYUXwzOU5+VHu7LLcYlg3rPo+vY68anAAfBe4Ir7XQ
+fHkVCq0d9P7pnwcQwNgW9I8mJw1goOV5PZsrbu9Yz7PaMc/uMrBTnhSiLnKXEd9n
+FwZ4xA52yWV5NWhapS4N/TzpTbfxaMyxWQIDAQAB
+-----END RSA PUBLIC KEY-----
+
+Signature IMbpDvkN6cBNBGZB1K8S5rLMeiNgFBHSy4VQhOEY/MGZTTbGNPkIPshLS6cXCq+M+G2i+tKOnORA2OVoXdLWo3ehQJVwQfS+P4PscCPTglpl7GY3FmOW9c50x1NYyBQ3gzRoxKiwj8whHYBI/B6cci7/R2zE+zfO+yyPvHhHXtTH8oW05+nYndLwT5Z9Yc3XEJfZY3UK8LosKLxwZzFnmpLb51flaGaqcidRo21t4E+747DCYHxAjneFeQOH56fXW103N7/HCgOOgFuHGpkIoF8lRJjhh+m0TR8TeD6MIE40V44rLscqDTcKb1DuZ8YuoyU4GMLwQd/yjocOFiewNg
+
+Signature Verified
+```
 
 ---
 
